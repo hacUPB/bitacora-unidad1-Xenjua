@@ -23,7 +23,7 @@ D;JGT
 @i
 D=M
 @suma
-M=M+D
+M=D+M
 
 
 @i
