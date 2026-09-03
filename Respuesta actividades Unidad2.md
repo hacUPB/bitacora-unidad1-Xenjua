@@ -919,8 +919,400 @@ El objeto del heap finalmente se destruye cuando se ejecuta:
 `delete pBloque2;`
 ```
 ACTIVIDAD INTEGRADORA 2
+ 
+``` js
+Bitácora - Actividad de transferencia y resolución de problemasContexto:
+Eres parte de un equipo de desarrollo de un motor para videojuegos. Un colega ha implementado una clase Personaje para gestionar los datos básicos de los NPCs (Non-Playable Characters) en el juego, pero el programa está fallando de formas impredecibles (crashes) y parece haber fugas de memoria (el juego consume cada vez más RAM).
+Se te ha encargado auditar la clase Personaje, identificar los problemas de gestión de memoria y refactorizarla para que sea robusta y segura.
+//Código problemático:
+#include <iostream>
+#include <string>
+class Personaje {
+		public:
+				std::string nombre;
+				int* estadisticas;
+		    Personaje(std::string n, int vida, int ataque, int defensa) {
+				    nombre = n;
+				    estadisticas = new int[3];
+				    estadisticas[0] = vida;
+				    estadisticas[1] = ataque;
+				    estadisticas[2] = defensa;
+				    std::cout << "Constructor: nace " << nombre << std::endl;
+				    }
+    void imprimir() {
+		    std::cout << "Personaje " << nombre << " [Vida: " << estadisticas[0] << ", ATK: " << estadisticas[1]<< ", DEF: " << estadisticas[2]<< "]" << std::endl;
+		    }
+		};
+void simularEncuentro() {
+		std::cout << "\n--- Iniciando encuentro ---" << std::endl;
+		Personaje heroe("Aragorn", 100, 20, 15);
+    Personaje copiaHeroe = heroe;
+    copiaHeroe.nombre = "Copia de Aragorn";
+    std::cout << "Saliendo del encuentro..." << std::endl;
+    }
+int main() {
+		simularEncuentro();
+		std::cout << "\nSimulación terminada." << std::endl;
+		return 0;
+		}
+
+1. **Diagnóstico del problema (análisis):**
+◦ Compila y ejecuta el código.
+◦ Identifica y explica con detalle al menos **dos errores críticos** de gestión de memoria en la clase `Personaje` y su uso en `simularEncuentro`.
+◦ Para cada error, describe:
+▪ ¿Cuál es el error?
+▪ ¿Por qué ocurre? Explica el mecanismo a nivel de memoria (stack, heap, punteros)
+▪ ¿Cuál es su consecuencia?
+2. Solución y refactorización (síntesis y creación):
+◦ Re-escribe la clase `Personaje` para que sea segura en cuanto a memoria. Debes utilizar los conocimientos adquiridos en esta unidad y por tanto tu solución no debería usar la **Regla de los tres** que probablemente sea la solución que te ofrezca una IA.
+◦ Presenta el código completo de tu clase `Personaje` corregida.
+3. **Justificación de la Solución:**
+Explica por qué cada uno de los cambios que añadiste resuelven los problemas que diagnosticaste.
+
+# 1. Diagnóstico del problema
+
+El programa compila y ejecuta normalmente, mostrando:
+
+```text
+--- Iniciando encuentro ---
+Constructor: nace Aragorn
+Saliendo del encuentro...
+
+Simulación terminada.
+```
+
+Aunque aparentemente funciona, existen problemas importantes relacionados con la memoria.
+
+## Error 1: Fuga de memoria
+
+### ¿Cuál es el error?
+
+En el constructor se reserva memoria dinámicamente:
+
+```cpp
+estadisticas = new int[3];
+```
+
+pero en ningún momento se utiliza:
+
+```cpp
+delete[] estadisticas;
+```
+
+Por lo tanto, la memoria reservada nunca se libera.
+
+### ¿Por qué ocurre?
+
+El objeto `heroe` se crea como variable local dentro de `simularEncuentro`, por lo tanto el objeto `heroe` está en el stack.
+
+Sin embargo, `estadisticas` es un puntero que guarda la dirección de un arreglo creado mediante `new`.
+
+La organización puede verse así:
+
+```text
+STACK
+
+heroe
+ ├── nombre
+ └── estadisticas ────────────┐
+                              │
+                              ▼
+HEAP
+                        [100][20][15]
+```
+
+Cuando termina `simularEncuentro`, el objeto `heroe` desaparece automáticamente del stack.
+
+Pero el arreglo creado con `new` se encuentra en el heap y no se destruye automáticamente.
+
+Como la clase no tiene un destructor que haga:
+
+```cpp
+delete[] estadisticas;
+```
+
+la memoria queda ocupada y ya no existe un puntero válido desde el programa que permita liberarla.
+
+### Consecuencia
+
+Se produce una **fuga de memoria (memory leak)**.
+
+En este programa únicamente se pierden 12 bytes, suponiendo que cada `int` ocupa 4 bytes:
+
+```text
+3 × 4 = 12 bytes
+```
+
+Pero si se crearan muchos personajes repetidamente, la memoria desperdiciada aumentaría continuamente.
+
+---
+
+# Error 2: Copia superficial del puntero
+
+El segundo problema ocurre aquí:
+
+```cpp
+Personaje copiaHeroe = heroe;
+```
+
+Como no se ha definido un mecanismo especial de copia, C++ realiza una copia miembro por miembro.
+
+El atributo:
+
+```cpp
+std::string nombre;
+```
+
+se copia correctamente.
+
+Pero:
+
+```cpp
+int* estadisticas;
+```
+
+es solamente un puntero.
+
+Por lo tanto, C++ copia la dirección almacenada en el puntero, no el arreglo.
+
+Después de la copia tenemos dos objetos diferentes:
+
+```text
+STACK
+
+heroe
+ └── estadisticas ──────┐
+
+copiaHeroe              │
+ └── estadisticas ──────┤
+                        │
+                        ▼
+HEAP
+                   [100][20][15]
+```
+
+`heroe` y `copiaHeroe` son objetos distintos en el stack, pero ambos punteros apuntan al mismo arreglo del heap.
+
+Por ejemplo, si se hiciera:
+
+```cpp
+copiaHeroe.estadisticas[0] = 1;
+```
+
+también cambiaría:
+
+```cpp
+heroe.estadisticas[0]
+```
+
+porque ambos están accediendo exactamente a la misma posición de memoria.
+
+### Consecuencia
+
+La copia no es realmente independiente.
+
+Se produce un problema de **aliasing**, ya que dos objetos diferentes comparten accidentalmente la misma memoria.
+
+Esto puede generar modificaciones inesperadas.
+
+Además, si posteriormente se agregara simplemente un destructor:
+
+```cpp
+~Personaje() {
+    delete[] estadisticas;
+}
+```
+
+aparecería otro problema todavía más grave.
+
+Cuando se destruyera `copiaHeroe`, liberaría el arreglo.
+
+Después `heroe` intentaría liberar exactamente el mismo arreglo otra vez.
+
+Esto produciría un:
+
+```text
+double delete
+```
+
+o doble liberación de memoria, causando comportamiento indefinido.
+
+---
+
+# 2. Solución y refactorización
+
+En este caso no es realmente necesario utilizar memoria dinámica.
+
+Cada personaje siempre tiene exactamente tres estadísticas:
+
+* vida
+* ataque
+* defensa
+
+Por lo tanto, podemos guardar directamente los tres enteros dentro del objeto.
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+class Personaje {
+public:
+    string nombre;
+    int estadisticas[3];
+
+    Personaje(string n, int vida, int ataque, int defensa) {
+        nombre = n;
+
+        estadisticas[0] = vida;
+        estadisticas[1] = ataque;
+        estadisticas[2] = defensa;
+
+        cout << "Constructor: nace " << nombre << endl;
+    }
+
+    ~Personaje() {
+        cout << "Destructor: muere " << nombre << endl;
+    }
+
+    void imprimir() {
+        cout << "Personaje " << nombre
+             << " [Vida: " << estadisticas[0]
+             << ", ATK: " << estadisticas[1]
+             << ", DEF: " << estadisticas[2]
+             << "]" << endl;
+    }
+};
+
+void simularEncuentro() {
+
+    cout << "\n--- Iniciando encuentro ---" << endl;
+
+    Personaje heroe("Aragorn", 100, 20, 15);
+
+    Personaje copiaHeroe = heroe;
+
+    copiaHeroe.nombre = "Copia de Aragorn";
+
+    copiaHeroe.estadisticas[0] = 50;
+
+    heroe.imprimir();
+    copiaHeroe.imprimir();
+
+    cout << "Saliendo del encuentro..." << endl;
+}
+
+int main() {
+
+    simularEncuentro();
+
+    cout << "\nSimulacion terminada." << endl;
+
+    return 0;
+}
 
 
+ 3. Justificación de la solución
+
+El cambio principal fue reemplazar:
+cpp
+int* estadisticas;
+por:
+cpp
+int estadisticas[3];
+Antes, el objeto únicamente contenía un puntero y el arreglo real se encontraba en el heap.
+Ahora los tres valores forman parte directamente del objeto.
+La estructura es aproximadamente:
+text
+STACK
+
+heroe
+ ├── nombre
+ └── estadisticas
+      ├── 100
+      ├── 20
+      └── 15
+Ya no es necesario utilizar:
+cpp
+new
+```
+
+ni:
+
+```cpp
+delete[]
+```
+
+Por lo tanto, se elimina el riesgo de fuga de memoria.
+
+Además, cuando hacemos:
+
+```cpp
+Personaje copiaHeroe = heroe;
+```
+
+C++ copia también los tres valores del arreglo.
+
+Ahora tenemos:
+
+```text
+STACK
+
+heroe
+ └── estadisticas
+      [100][20][15]
+
+
+copiaHeroe
+ └── estadisticas
+      [100][20][15]
+```
+
+Son dos arreglos diferentes.
+
+Por eso, si hacemos:
+
+```cpp
+copiaHeroe.estadisticas[0] = 50;
+```
+
+la copia queda:
+
+```text
+[50][20][15]
+```
+
+mientras que el original continúa:
+
+```text
+[100][20][15]
+```
+
+Por lo tanto, los objetos son completamente independientes.
+
+Esta solución evita tener que implementar la Regla de los Tres porque la clase ya no administra memoria dinámica manualmente.
+
+## Conclusión
+
+El código original tiene principalmente dos problemas:
+
+1. **Fuga de memoria:** se reserva memoria con `new[]` pero nunca se libera.
+
+2. **Copia superficial:** `heroe` y `copiaHeroe` terminan apuntando al mismo arreglo de estadísticas.
+
+La solución consiste en eliminar la memoria dinámica innecesaria y almacenar directamente las estadísticas dentro del objeto usando:
+
+```cpp
+int estadisticas[3];
+```
+
+De esta manera, la memoria se administra automáticamente, las copias son independientes y se eliminan los riesgos relacionados con `new`, `delete`, fugas de memoria y dobles liberaciones.
+
+
+
+
+
+```
 
 
 
