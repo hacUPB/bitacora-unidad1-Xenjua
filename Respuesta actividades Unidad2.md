@@ -23,9 +23,11 @@ int main() {
 
 
 El programa obtiene la dirección de memoria de la función main() e intenta modificar los primeros bytes de su código escribiendo un 0. Esto provoca normalmente una violación de acceso, ya que el código ejecutable se encuentra en una región de memoria protegida contra escritura. Además, modificar directamente la memoria de una función produce comportamiento indefinido en C++.
+
 ```
 Experimento 2
 ``` js
+
 #include <iostream>
 #include <cstdlib>
 using namespace std;
@@ -576,3 +578,352 @@ Un objeto creado en el Stack se almacena automáticamente en la memoria local de
 Al observar &pHeap en Memory1, se puede ver que en esa posición de memoria está almacenado el valor que aparece en pHeap dentro de Locals. Esto ocurre porque pHeap es un puntero: la variable se encuentra en el Stack, pero su contenido es la dirección del objeto Punto creado en el Heap. Por lo tanto, &pHeap representa la dirección del puntero y pHeap representa la dirección del objeto al que apunta.
 
 ```
+
+Actividad 8: Funciones y objetos en C++
+
+``` js
+CODIGO
+#include <iostream>
+#include <string>
+using namespace std;
+class Punto {
+		public:   string name;
+							int x;
+							int y;
+    // Constructor
+    Punto(string _name, int _x, int _y) : name(_name),x(_x), y(_y) {
+		    cout << "Constructor: Punto "<< name <<" (" << x << ", " << y << ") creado." << endl;
+		    }
+    // Destructor
+    ~Punto() {
+		    cout << "Destructor: Punto " << name << "(" << x << ", " << y << ") destruido." << endl;
+		    }
+    // Método para imprimir valores
+    void imprimir() {
+		    cout << "Punto "<< name << "(" << x << ", " << y << ")" << endl;
+		    }
+		};
+		void cambiarNombre(Punto p, string nuevoNombre) {
+				p.name = nuevoNombre;
+				}
+int main() {    // Objeto original
+		Punto original("original",70, 80);
+		original.imprimir();
+		cambiarNombre(original, "cambiado");
+		original.imprimir();
+		return 0;
+		}
+
+1. ¿Qué ocurre después de llamar a la función `cambiarNombre`? ¿Por qué aparece el mensaje `Destructor: Punto cambiado(70, 80) destruido.`?
+ Al llamar a `cambiarNombre`, el objeto `original` se copia en el parámetro `p` porque está siendo pasado por valor. Dentro de la función solamente se modifica la copia. Al terminar la función, `p` sale de su ámbito y se ejecuta su destructor, por eso aparece `Destructor: Punto cambiado(70, 80) destruido.`
+2. ¿Por qué `original` sigue existiendo luego de llamar `cambiarNombre`?
+`original` sigue existiendo porque no fue modificado ni destruido. La función trabaja con una copia independiente llamada `p`. `original` continúa existiendo hasta que termina la función `main`.
+3. ¿En qué parte del mapa de memoria se encuentra `original` y en qué parte se encuentra `p`? ¿Son el mismo objeto? (recuerda usar siempre el depurador para responder estas preguntas).
+Tanto `original` como `p` se encuentran en el stack porque son variables locales. `original` pertenece al ámbito de `main` y `p` al ámbito de `cambiarNombre`. No son el mismo objeto, ya que tienen direcciones de memoria diferentes, lo cual se puede comprobar en el depurador observando `&original` y `&p`.
+
+Modifica la función `cambiarNombre`:
+`void cambiarNombre(Punto& p, string nuevoNombre) {  p.name = nuevoNombre;}`
+1. ¿Qué ocurre ahora? ¿Por qué?
+
+Ahora el parámetro `p` se pasa por referencia usando `Punto&`. Esto hace que no se cree una copia del objeto, sino que `p` haga referencia directamente a `original`.
+Por esta razón, al cambiar `p.name`, también se modifica `original.name`. Después de llamar a `cambiarNombre`, `original` tendrá el nombre `"cambiado"`.
+Tampoco se ejecuta un destructor al terminar la función `cambiarNombre`, ya que no se creó un objeto adicional. El destructor se ejecuta solamente cuando termina `main`, destruyendo el objeto `original`.
+
+Modifica ahora a `cambiarNombre` y a `main` de la siguiente manera:
+
+```cpp
+void cambiarNombre(Punto* p, string nuevoNombre) {
+		p->name = nuevoNombre;
+		}
+int main() {    // Objeto original
+		Punto original("original",70, 80);
+		original.imprimir();
+    cambiarNombre(&original, "cambiado");
+    original.imprimir();
+    return 0;
+    }
+
+1. ¿Qué ocurre ahora? ¿Por qué?
+2. En este caso ¿Cuál es la diferencia entre pasar un objeto por valor, por referencia y por puntero?
+
+1. Ahora se pasa la dirección de memoria de `original` a la función mediante un puntero. El parámetro `p` apunta al mismo objeto `original`.
+Al ejecutar:
+`p->name = nuevoNombre;`
+se modifica directamente el atributo `name` del objeto original. Por eso, después de llamar a la función, al imprimir `original` aparece:
+`Punto cambiado(70, 80)`
+No se crea una copia del objeto, por lo tanto no aparece un destructor al terminar `cambiarNombre`. El destructor se ejecuta únicamente al finalizar `main`.
+
+2. La diferencia entre pasar un objeto por valor, por referencia y por puntero es:
+* Por valor: se crea una copia independiente del objeto. Los cambios hechos dentro de la función no afectan al objeto original. La copia se destruye al terminar la función.
+* Por referencia (`Punto&`): no se crea una copia. El parámetro hace referencia directamente al objeto original, por lo que cualquier modificación afecta al original.
+* Por puntero (`Punto*`): tampoco se crea una copia del objeto. Se pasa la dirección de memoria del objeto y se accede a él mediante el puntero. Los cambios también afectan al objeto original.
+La diferencia principal entre referencia y puntero es la forma de acceder al objeto. Con referencia se usa `p.name`, mientras que con puntero se usa `p->name`.
+
+
+```
+Actividad 9: Objetos con miembros estáticos y variables de instancia
+
+``` js
+
+CODIGO:
+
+#include <iostream>
+using namespace std;
+class Contador {
+		public:   int valor;
+							static int total;
+    // Constructor
+    Contador(int v = 0) : valor(v) {
+		    total++;
+		    cout << "Contador creado. total de Contadores = " << total << endl;
+		    }
+    // Destructor
+    ~Contador() {
+		    cout << "Contador destruido. valor = " << valor << endl;
+		    }
+    // Método para incrementar el contador de instancia
+    void incrementar() {
+		    valor++;
+		    }
+		};
+// Definición e inicialización del miembro estático
+int Contador::total = 0;
+int main() {
+		// Crea varios objetos en el stack
+		Contador c1(5);
+		Contador c2(10);
+    // Inspecciona con el depurador las direcciones de c1 y c2.
+    // Observa que 'total' es compartido entre todos los objetos.
+    c1.incrementar();
+    c2.incrementar();
+    cout << "c1.valor = " << c1.valor << endl;    cout << "c2.valor = " << c2.valor << endl;
+    cout << "Contador::total = " << Contador::total << endl;
+    // Puedes también crear un objeto dinámico para comparar:
+    Contador* c3 = new Contador(15);
+    c3->incrementar();
+    cout << "c3->valor = " << c3->valor << endl;
+    // Coloca breakpoints en la creación de cada objeto y en las llamadas a 'incrementar()'
+    // Observa cómo el miembro estático 'total' se comparte y no se almacena en el stack de cada objeto.
+    delete c3;
+    return 0;
+    }
+
+1. ¿Qué puedes concluir de los miembros estáticos y de instancia de una clase en C++? ¿Cómo se gestionan en memoria? ¿Qué ventajas y desventajas tienen? ¿Cuándo es útil utilizarlos?
+2. En el programa, en qué segmento de memoria se están almacenando c1, c2, c3 y Contador::total? Ten especial cuidado con la respuesta que das para el caso de c3, piensa de nuevo, qué es c3 y qué está almacenando. Ahora, responde de nuevo, en qué segmento de la memoria se está almacenando c3 y en qué segmento de la memoria se está almacenando el objeto al que apunta c3.
+1. Los miembros de instancia pertenecen a cada objeto de forma independiente. En este caso, `valor` es un miembro de instancia, por lo que cada objeto (`c1`, `c2` y el objeto apuntado por `c3`) tiene su propia copia de `valor`.
+El miembro estático `total`, en cambio, pertenece a la clase `Contador` y no a cada objeto individual. Existe una sola copia de `total` compartida por todos los objetos.
+En memoria, los miembros de instancia se almacenan dentro de cada objeto. Por eso, su ubicación depende de dónde se haya creado el objeto: si el objeto está en el stack, sus miembros también forman parte de ese objeto en el stack; si está en el heap, sus miembros forman parte del objeto en el heap.
+Los miembros estáticos no se guardan dentro de cada objeto. Se almacenan en una zona de memoria estática/global durante toda la ejecución del programa. En este caso, como `Contador::total` está inicializado con `0`, normalmente se encuentra en la zona de datos estáticos, comúnmente en `.data`.
+Ventajas de los miembros estáticos:
+* Permiten compartir información entre todos los objetos de una clase.
+* Evitan tener una copia del mismo dato en cada objeto.
+* Son útiles para llevar conteos globales, configuraciones compartidas o información común.
+Desventajas:
+* Al ser compartidos, cualquier modificación afecta a todos los objetos.
+* Un uso excesivo puede hacer que el programa sea más difícil de controlar.
+* En programas con varios hilos pueden necesitar mecanismos de sincronización.
+Los miembros de instancia son útiles cuando cada objeto debe tener su propio estado. Los miembros estáticos son útiles cuando una información debe ser común para todos los objetos de la clase.
+2. En este programa:
+`c1` se almacena en el stack porque es una variable local de `main`.
+`c2` también se almacena en el stack porque es una variable local de `main`.
+`c3` también se almacena en el stack. Esto es importante porque `c3` no es el objeto `Contador`, sino una variable de tipo puntero que almacena una dirección de memoria.
+El objeto creado con:
+`new Contador(15)`
+se almacena en el heap. Por lo tanto:
+* `c3` → stack
+* objeto al que apunta `c3` → heap
+Finalmente, `Contador::total` es una variable estática de la clase y se almacena en la zona de memoria estática/global del programa, normalmente en el segmento `.data` al estar explícitamente inicializada.
+
+
+``` 
+Actividad 10: Explorando el ciclo de vida de un objeto
+
+``` js
+CODIGO:
+#include <iostream>
+using namespace std;
+class Punto {
+		public:    int x;    int y;
+    // Constructor
+    Punto(int _x, int _y) : x(_x), y(_y) {
+		    cout << "Constructor: Punto(" << x << ", " << y << ") creado." << endl;
+		    }
+    // Destructor
+    ~Punto() {
+		    cout << "Destructor: Punto(" << x << ", " << y << ") destruido." << endl;
+		    }
+    // Método para imprimir valores
+    void imprimir() {
+		    cout << "Punto(" << x << ", " << y << ")" << endl;
+		    }
+		};
+int main() {
+		{
+				cout << "Inicio del bloque" << endl;
+				Punto pBloque(100, 200);
+				// Coloca un breakpoint aquí para ver 'pBloque' en el stack.
+				pBloque.imprimir();
+		}
+		// Al salir del bloque, el destructor de 'pBloque' se invoca.
+		cout << "Fuera del bloque" << endl;
+    // Creación dinámica:
+    Punto* pDinamico = new Punto(300, 400);
+    pDinamico->imprimir();
+    // 'pDinamico' sigue existiendo hasta que se libere manualmente.
+    // Coloca un breakpoint aquí y observa la dirección de memoria.
+    delete pDinamico;
+    // Después de 'delete', el destructor se llama y la memoria se libera.
+    return 0;
+
+Un objeto en el **stack** se crea automáticamente cuando el programa entra al bloque o función donde fue declarado. Su ciclo de vida termina automáticamente cuando se sale de ese bloque.
+En el ejemplo:
+`Punto pBloque(100, 200);`
+`pBloque` se crea al entrar en el bloque y se almacena en el stack. Cuando se llega al final de las llaves `{ }`, el objeto deja de existir y su destructor se ejecuta automáticamente:
+`Destructor: Punto(100, 200) destruido.`
+No es necesario liberar su memoria manualmente.
+En cambio, un objeto en el **heap** se crea dinámicamente usando `new`:
+`Punto* pDinamico = new Punto(300, 400);`
+Aquí, `pDinamico` es un puntero local que normalmente está en el stack, pero el objeto `Punto(300, 400)` está almacenado en el heap.
+El objeto del heap no se destruye automáticamente al salir de un bloque. Su ciclo de vida continúa hasta que se libera manualmente usando:
+`delete pDinamico;`
+Al ejecutar `delete`, se llama al destructor del objeto y se libera la memoria que ocupaba en el heap.
+La diferencia principal es que los objetos del stack tienen un ciclo de vida automático, mientras que los objetos creados en el heap tienen un ciclo de vida controlado manualmente por el programador.
+
+Hago el cambio:
+
+#include <iostream>
+using namespace std;
+class Punto {
+		public:    int x;    int y;
+    // Constructor
+    Punto(int _x, int _y) : x(_x), y(_y) {
+		    cout << "Constructor: Punto(" << x << ", " << y << ") creado." << endl;
+		    }
+    // Destructor
+    ~Punto() {
+		    cout << "Destructor: Punto(" << x << ", " << y << ") destruido." << endl;
+		    }
+    // Método para imprimir valores
+    void imprimir() {
+		    cout << "Punto(" << x << ", " << y << ")" << endl;
+		    }
+		};
+int main() {
+		{
+				cout << "Inicio del bloque" << endl;
+				Punto pBloque(100, 200);
+				pBloque.imprimir();
+				// Coloca un breakpoint aquí para ver 'pBloque' en el stack.
+		}
+		// Al salir del bloque, el destructor de 'pBloque' se invoca.
+		cout << "Fuera del bloque" << endl;
+		// Creación dinámica:
+		Punto* pDinamico = new Punto(300, 400);
+		pDinamico->imprimir();
+		// 'pDinamico' sigue existiendo hasta que se libere manualmente.
+		// Coloca un breakpoint aquí y observa la dirección de memoria.
+		delete pDinamico;
+		// Después de 'delete', el destructor se llama y la memoria se libera.
+	  {
+		  cout << "Inicio del bloque 2" << endl;
+		  Punto* pBloque2 = new Punto(500, 600);
+		  pBloque2->imprimir();
+		}
+			pBloque2->imprimir();
+			delete pBloque2;
+	    return 0;
+}
+
+    }
+1. El programa no compila porque `pBloque2` fue declarado dentro del segundo bloque:
+{  
+    Punto* pBloque2 = new Punto(500, 600);  
+}
+Esto significa que la variable puntero pBloque2 solamente existe dentro de ese bloque. Cuando se cierran las llaves, pBloque2 sale de su alcance.
+Por eso, estas instrucciones producen error:
+pBloque2->imprimir();
+delete pBloque2;
+Fuera del bloque, el compilador ya no conoce la variable pBloque2.
+Es importante notar que el objeto creado con new Punto(500, 600) está en el heap y podría seguir existiendo después del bloque, pero se pierde el puntero que permitía acceder a él. Esto produciría una fuga de memoria si no hubiera otra forma de recuperar su dirección.
+2. Si pBloque2 se declara fuera del bloque y se inicializa dentro, el programa sí compila:
+Punto* pBloque2;
+Luego, dentro del bloque:
+pBloque2 = new Punto(500, 600);
+La variable pBloque2 fue declarada en el alcance de main, por lo que sigue existiendo después de terminar el bloque.
+El objeto creado con new se encuentra en el heap y tampoco se destruye al salir del bloque. Por eso, después del bloque todavía se puede acceder al objeto mediante:
+pBloque2->imprimir();
+Finalmente:
+delete pBloque2;
+destruye el objeto y libera la memoria del heap.
+En este caso, pBloque2 se encuentra en el stack porque es una variable local de main, mientras que el objeto Punto(500, 600) al que apunta se encuentra en el heap.
+
+En este caso:
+#include <iostream>
+using namespace std;
+class Punto {
+		public:    int x;    int y;
+    // Constructor
+    Punto(int _x, int _y) : x(_x), y(_y) {
+		    cout << "Constructor: Punto(" << x << ", " << y << ") creado." << endl;
+		    }
+    // Destructor
+    ~Punto() {
+		    cout << "Destructor: Punto(" << x << ", " << y << ") destruido." << endl;
+		    }
+    // Método para imprimir valores
+    void imprimir() {
+		    cout << "Punto(" << x << ", " << y << ")" << endl;
+		    }
+		};
+int main() {
+		{
+				cout << "Inicio del bloque" << endl;
+				Punto pBloque(100, 200);
+				// Coloca un breakpoint aquí para ver 'pBloque' en el stack.
+				pBloque.imprimir();
+		}
+    Punto* pBloque2 = nullptr;
+    {
+		    cout << "Inicio del bloque 2" << endl;
+		    pBloque2 = new Punto(500, 600);
+		    pBloque2->imprimir();
+		 }
+		 pBloque2->imprimir();
+		 delete pBloque2;
+	   return 0;
+}
+1. ¿Por qué el objeto `pBloque` se destruye al salir del bloque y `pBloque2` no? Recuerda de nuevo, `pBloque2` es un objeto o es una referencia a un objeto?
+2. ¿En qué parte de la memoria se almacena `pBloque2`?
+3. ¿En qué parte de la memoria se almacena el objeto al que apunta `pBloque2`?1. `pBloque` se destruye al salir del bloque porque es un objeto creado directamente en el stack:
+
+`Punto pBloque(100, 200);`
+
+Su ciclo de vida depende del bloque `{ }` donde fue declarado. Cuando termina ese bloque, C++ llama automáticamente a su destructor
+En cambio, `pBloque2` no es un objeto `Punto`, sino un **puntero** que almacena la dirección de un objeto `Punto`
+`Punto* pBloque2 = nullptr;`
+Luego:
+`pBloque2 = new Punto(500, 600);`
+crea el objeto real en el heap. Ese objeto no se destruye al salir del bloque, porque los objetos creados con new permanecen en memoria hasta que se utiliza `delete`
+Por eso todavía se puede hacer:
+`pBloque2-imprimir();`
+fuera del bloque.
+2. pBloque2 es una variable local de main, por lo tanto el puntero pBloque2 se almacena en el stack
+3. El objeto Punto(500, 600) ncreado mediante:
+new Punto(500, 600)
+se almacena en el **heap**.
+Por lo tanto:
+* pBloque  objeto almacenado en el stack.
+* pBloque2  puntero almacenado en el stack.
+* Objeto al que apunta pBloque2 → almacenado en el heap.
+El objeto del heap finalmente se destruye cuando se ejecuta:
+`delete pBloque2;`
+```
+ACTIVIDAD INTEGRADORA 2
+
+
+
+
+
+
+
+
