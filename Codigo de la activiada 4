@@ -332,3 +332,13 @@ void ofApp::keyPressed(int key) {
     }
 }
 ```
+
+al final he tenido problemas para poder montar los videos, el link. en mi pc no carga pero por un problema del 2022 que estoy tratando de resolver, tan pronto pueda resolverlo se lo mostrare. de momento le dejo el codigo y le muestro la respuesta
+a preguntas de la unidad 2 en estructura de datos
+ ¿Qué hiciste bien en esta unidad que debes continuar haciendo?
+ ¿Qué deberías comenzar a hacer para mejorar tu proceso?
+Hice bien en practicar directamente con el código y probar conceptos como stack, heap, punteros, referencias y paso por valor. También utilicé el depurador para observar direcciones de memoria y entender mejor qué objeto se estaba modificando o destruyendo. 
+Esto es algo que debo continuar haciendo.
+
+Para mejorar mi proceso, debería comenzar a revisar con más atención el ciclo de vida de cada variable y preguntarme dónde está almacenada, 
+cuándo se destruye y si estoy copiando un objeto o solamente su dirección. También debería hacer pruebas pequeñas en el código antes de avanzar para entender mejor qué efecto produce cada cambio.
