@@ -1,0 +1,6 @@
+@SCREEN
+M=1
+
+(FIN)
+@FIN
+0;JMP
