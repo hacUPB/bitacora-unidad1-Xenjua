@@ -14,7 +14,6 @@ Administrador hereda de Usuario, por lo que puede usar nombre e IniciarSesion(),
 El polimorfismo permite que diferentes objetos utilicen un mismo método pero se comporten de manera diferente. Un código polimórfico puede trabajar con varios tipos de objetos de forma más flexible y reutilizable.
 
 CODIGO:
-
 using System;using System.Collections.Generic;
 public abstract class Figura{
 		private string nombre;
@@ -91,6 +90,8 @@ Por eso, el objeto guarda tanto el valor del radio como el nombre `"Círculo"`.
 # Polimorfismo
 
 Observa el bucle foreach. La variable fig es de tipo Figura, pero a veces contiene un Circulo y otras un Rectangulo. Cuando se llama a fig.Dibujar(), el programa ejecuta la versión correcta. En tu opinión, ¿Cómo crees que funciona esto “por debajo”? No necesitas saber la respuesta correcta, solo quiero que intentes razonar cómo podría ser.
+
+
 Creo que el programa revisa qué tipo de objeto está guardado realmente en `fig` en cada vuelta del `foreach`. Aunque la variable sea de tipo `Figura`, el objeto puede ser un `Circulo` o un `Rectangulo`.
 Entonces, cuando se llama a `fig.Dibujar()`, el programa identifica el tipo real del objeto y ejecuta el método `Dibujar()` correspondiente. Si es un `Circulo`, usa el método de `Circulo`, y si es un `Rectangulo`, usa el de `Rectangulo`.
 Pienso que esto funciona gracias a que `Dibujar()` está definido como `abstract` en `Figura` y luego cada clase lo implementa con `override`.
