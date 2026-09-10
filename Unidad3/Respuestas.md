@@ -114,6 +114,8 @@ Altura = 6.0
 -----------------
 ```
 Es decir, la herencia hace que el objeto tenga tanto los datos de su clase padre como los datos propios de su clase.
+
+
 2. **El mecanismo del polimorfismo**
 Creo que cada objeto guarda de alguna forma información sobre cuál es su tipo real. Entonces, aunque `fig` sea una referencia de tipo `Figura`, el programa puede revisar durante la ejecución si el objeto al que apunta es realmente un `Circulo` o un `Rectangulo`.
 Me lo imagino así:
@@ -127,6 +129,7 @@ Dibujar() -> Rectangulo.Dibujar()
 ```
 Entonces, cuando se ejecuta `fig.Dibujar()`, el programa consulta qué tipo de objeto hay realmente y busca la versión correcta del método `Dibujar()`.
 Otra posibilidad es que cada objeto tenga algo parecido a una tabla donde se guardan las funciones que le corresponden, y el programa busque allí qué método debe ejecutar.
+
 3. **La barrera del encapsulamiento**
 Creo que principalmente el compilador revisa los modificadores como `private`, `public` o `protected` antes de ejecutar el programa.
 Por ejemplo, si intento hacer esto desde una clase que no tiene permiso:
@@ -135,5 +138,9 @@ objeto.nombre = "Nuevo nombre";
 ```
 el compilador detectaría que `nombre` es `private` y mostraría un error, evitando que el programa compile.
 Pienso que funciona de esta manera porque `private` es una regla del lenguaje que determina desde qué partes del código se puede acceder a una variable o método. Por eso, gran parte de esa protección se revisa durante la compilación, antes de que el programa empiece a ejecutarse.
+
+# Actividad 2
+
+<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/222d3055-f8c3-4b5e-8096-fdd820e3e892" />
 
 
