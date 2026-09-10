@@ -62,9 +62,8 @@ public class Programa{
 - Señala una línea de código que sea un ejemplo claro de encapsulamiento y explica por qué lo es.
 - ¿Por qué crees que el campo nombre es private pero la propiedad Nombre es public? ¿Qué problema se evita con esto?
 
-  1. Ejemplo de encapsulamiento:
+1. Ejemplo de encapsulamiento:
    Una línea clara es:
-
 `private string nombre;`
 Es encapsulamiento porque el atributo `nombre` está protegido y no puede ser modificado directamente desde fuera de la clase `Figura`. Para acceder a él se utiliza la propiedad `Nombre`, lo que permite controlar cómo se consulta o modifica el dato.
 
@@ -72,3 +71,27 @@ Es encapsulamiento porque el atributo `nombre` está protegido y no puede ser mo
    El campo `nombre` es `private` para evitar que otras clases lo modifiquen directamente. En cambio, la propiedad `Nombre` es `public` para permitir consultar su valor de una forma controlada.
 
 Además, tiene `protected set`, por lo que solamente la clase `Figura` y las clases que heredan de ella pueden cambiar el nombre. Esto evita cambios incorrectos o accidentales desde otras partes del programa y mantiene los datos protegidos.
+
+# Herencia
+- ¿Cómo se evidencia la herencia en la clase Circulo?
+- Un objeto de tipo Circulo, además de Radio, ¿Qué otros datos almacena en su interior gracias a la herencia?
+
+1. ¿Cómo se evidencia la herencia en la clase `Circulo`?
+   La herencia se evidencia en esta línea:
+`public class Circulo : Figura`
+Esto significa que `Circulo` hereda de la clase `Figura`. Gracias a esto, puede usar características de `Figura`, como la propiedad `Nombre` y el método `Dibujar()`, aunque en este caso `Dibujar()` se sobrescribe con `override`.
+2. Un objeto de tipo `Circulo`, además de `Radio`, ¿qué otros datos almacena gracias a la herencia?
+   Además de `Radio`, un objeto `Circulo` también almacena el dato `nombre` que pertenece a la clase `Figura`.
+Cuando se crea un círculo con:
+`new Circulo(5.0)`
+se llama al constructor de `Figura` mediante:
+`base("Círculo")`
+Por eso, el objeto guarda tanto el valor del radio como el nombre `"Círculo"`.
+
+# Polimorfismo
+
+Observa el bucle foreach. La variable fig es de tipo Figura, pero a veces contiene un Circulo y otras un Rectangulo. Cuando se llama a fig.Dibujar(), el programa ejecuta la versión correcta. En tu opinión, ¿Cómo crees que funciona esto “por debajo”? No necesitas saber la respuesta correcta, solo quiero que intentes razonar cómo podría ser.
+Creo que el programa revisa qué tipo de objeto está guardado realmente en `fig` en cada vuelta del `foreach`. Aunque la variable sea de tipo `Figura`, el objeto puede ser un `Circulo` o un `Rectangulo`.
+Entonces, cuando se llama a `fig.Dibujar()`, el programa identifica el tipo real del objeto y ejecuta el método `Dibujar()` correspondiente. Si es un `Circulo`, usa el método de `Circulo`, y si es un `Rectangulo`, usa el de `Rectangulo`.
+Pienso que esto funciona gracias a que `Dibujar()` está definido como `abstract` en `Figura` y luego cada clase lo implementa con `override`.
+
