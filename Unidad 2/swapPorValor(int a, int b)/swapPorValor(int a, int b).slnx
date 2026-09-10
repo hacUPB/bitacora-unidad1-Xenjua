@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="swapPorValor(int a, int b)/swapPorValor(int a, int b).vcxproj" />
+</Solution>
