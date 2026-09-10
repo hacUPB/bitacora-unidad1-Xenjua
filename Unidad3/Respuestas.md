@@ -96,3 +96,44 @@ Creo que el programa revisa qué tipo de objeto está guardado realmente en `fig
 Entonces, cuando se llama a `fig.Dibujar()`, el programa identifica el tipo real del objeto y ejecuta el método `Dibujar()` correspondiente. Si es un `Circulo`, usa el método de `Circulo`, y si es un `Rectangulo`, usa el de `Rectangulo`.
 Pienso que esto funciona gracias a que `Dibujar()` está definido como `abstract` en `Figura` y luego cada clase lo implementa con `override`.
 
+# Imagina que eres un diseñador de lenguajes de programación. Tienes que decidir cómo implementar estos conceptos en la memoria y en el procesador. No hay respuestas incorrectas, solo ideas. Dibuja si te ayuda.
+
+1. Memoria y herencia: cuando creas un objeto `Rectangulo`, este tiene Base, Altura y también Nombre. ¿Cómo te imaginas que se organizan esos tres datos en la memoria del computador para formar un solo objeto?
+2. El mecanismo del polimorfismo: pensemos de nuevo en la llamada `fig.Dibujar()`. El compilador solo sabe que fig es una Figura. ¿Cómo decide el programa, mientras se está ejecutando, si debe llamar al Dibujar del Circulo o al del Rectangulo? Lanza algunas ideas o hipótesis.
+3. La barrera del encapsulamiento: ¿Cómo crees que el compilador logra que no puedas acceder a un miembro private desde fuera de la clase? ¿Es algo que se revisa cuando escribes el código, o es una protección que existe mientras el programa se ejecuta? ¿Por qué piensas eso?
+
+1. **Memoria y herencia**
+Yo me imagino que cuando se crea un objeto `Rectangulo`, todos sus datos quedan almacenados juntos en una zona de memoria. Aunque `Nombre` venga de la clase `Figura`, sigue formando parte del objeto `Rectangulo`.
+Podría imaginarlo así:
+```text
+Objeto Rectangulo
+-----------------
+Nombre = "Rectángulo"
+Base   = 4.0
+Altura = 6.0
+-----------------
+```
+Es decir, la herencia hace que el objeto tenga tanto los datos de su clase padre como los datos propios de su clase.
+2. **El mecanismo del polimorfismo**
+Creo que cada objeto guarda de alguna forma información sobre cuál es su tipo real. Entonces, aunque `fig` sea una referencia de tipo `Figura`, el programa puede revisar durante la ejecución si el objeto al que apunta es realmente un `Circulo` o un `Rectangulo`.
+Me lo imagino así:
+```text
+fig
+ |
+ v
+Objeto Rectangulo
+Tipo real: Rectangulo
+Dibujar() -> Rectangulo.Dibujar()
+```
+Entonces, cuando se ejecuta `fig.Dibujar()`, el programa consulta qué tipo de objeto hay realmente y busca la versión correcta del método `Dibujar()`.
+Otra posibilidad es que cada objeto tenga algo parecido a una tabla donde se guardan las funciones que le corresponden, y el programa busque allí qué método debe ejecutar.
+3. **La barrera del encapsulamiento**
+Creo que principalmente el compilador revisa los modificadores como `private`, `public` o `protected` antes de ejecutar el programa.
+Por ejemplo, si intento hacer esto desde una clase que no tiene permiso:
+```csharp
+objeto.nombre = "Nuevo nombre";
+```
+el compilador detectaría que `nombre` es `private` y mostraría un error, evitando que el programa compile.
+Pienso que funciona de esta manera porque `private` es una regla del lenguaje que determina desde qué partes del código se puede acceder a una variable o método. Por eso, gran parte de esa protección se revisa durante la compilación, antes de que el programa empiece a ejecutarse.
+
+
