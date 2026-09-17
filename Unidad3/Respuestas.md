@@ -153,7 +153,7 @@ En general, el programa utiliza partículas, herencia y polimorfismo para crear 
 
  1. Observación de la clase `ofApp`
 
-# Hipótesis antes de ejecutar
+## Hipótesis antes de ejecutar
 
 Antes de ejecutar el programa, espero encontrar en memoria un objeto de tipo `ofApp`. Dentro de este objeto se encuentra el vector
 Este vector no guarda directamente los objetos de las partículas, sino punteros a objetos que se crean dinámicamente con `new`.
@@ -162,126 +162,70 @@ También espero que estos objetos estén almacenados en el heap, ya que son crea
 
 ### ¿Qué puedo observar al ejecutar?
 
-Al utilizar el depurador en las ventanas **Locals** o **Autos**, puedo observar el objeto `ofApp` y dentro de este el vector `particles`.
+Al utilizar el depurador en las ventanas Locals o Autos, puedo observar el objeto `ofApp` y dentro de este el vector `particles`.
 
 Antes de crear partículas, el tamaño del vector es 0. Después de hacer clic o crear partículas, puedo observar que el tamaño aumenta y aparecen diferentes direcciones de memoria dentro del vector.
 
 El depurador permite ver información como:
-
 * El tamaño actual del vector.
 * La capacidad del vector.
 * Las direcciones almacenadas en `particles`.
 * El tipo de objeto al que apunta cada puntero.
 * Los atributos que tiene cada partícula.
-* Las direcciones donde se encuentran los objetos en memoria.
-
-Por ejemplo, un elemento del vector puede ser un `Particle*`, pero realmente apuntar a un objeto de tipo `RisingParticle` o `CircularExplosion`.
-
+* Las direcciones donde se encuentran los objetos en memoria..
 ### Conclusión
 
-Puedo concluir que `particles` funciona como un contenedor de punteros polimórficos. Todos los elementos son tratados como `Particle*`, pero los objetos reales pueden pertenecer a diferentes clases derivadas.
-
+Puedo concluir que `particles` funciona como un contenedor de punteros polimórficos. Todos los elementos son tratados como `Particle`, pero los objetos reales pueden pertenecer a diferentes clases derivadas.
 Los objetos son creados dinámicamente en memoria, por lo que es importante utilizar `delete` cuando dejan de utilizarse. De lo contrario, se producirían fugas de memoria.
 
----
 
 # 2. Objeto `CircularExplosion` en memoria
 
 Para poder capturar más fácilmente un objeto `CircularExplosion`, hice una modificación temporal para evitar que el tipo de explosión fuera completamente aleatorio.
-
 Por ejemplo, en lugar de:
 
-```cpp
+cpp
 int explosionType = (int)ofRandom(3);
-```
+
 
 se puede colocar temporalmente:
 
-```cpp
+cpp
 int explosionType = 0;
-```
 
-De esta manera todas las explosiones generadas son `CircularExplosion`.
 
-Después se puede colocar un breakpoint cuando se crea el objeto:
-
-```cpp
-particles.push_back(
-    new CircularExplosion(
-        particles[i]->getPosition(),
-        particles[i]->getColor()
-    )
-);
-```
+De esta manera todas las explosiones generadas son CircularExplosion.
 
 Así es más fácil detener la ejecución y observar el objeto con el depurador.
 
-## Jerarquía de `CircularExplosion`
+## jerarquia de circular exploson
 
 La jerarquía de clases es:
+text luego particle luego explosion particle y luego circularexplosion
 
-```text
-Particle
-   ↑
-ExplosionParticle
-   ↑
-CircularExplosion
-```
+Esto quiere decir que un CircularExplosion también contiene todo lo que pertenece a ExplosionParticle y a Partic.
 
-Esto quiere decir que un `CircularExplosion` también contiene todo lo que pertenece a `ExplosionParticle` y a `Particle`.
-
-Al abrir el objeto con el depurador se puede observar algo parecido a:
-
-```text
-CircularExplosion
-└── ExplosionParticle
-    ├── Particle
-    │   └── _vtable
-    ├── position
-    ├── velocity
-    ├── color
-    ├── age
-    ├── lifetime
-    └── size
-```
-
-`CircularExplosion` no agrega atributos propios. Principalmente modifica el comportamiento del objeto mediante su constructor y su método `draw()`.
+CircularExplosion no agrega atributos propios. Principalmente modifica el comportamiento del objeto mediante su constructor y su método draw().
 
 ### ¿Qué puedo observar en memoria?
 
-En la ventana **Locals** puedo ver los atributos de la explosión de una forma más fácil de interpretar.
+En la ventana Locals puedo ver los atributos de la explosión de una forma más fácil de interpretar.
 
-Por ejemplo:
+position contiene las coordenadas X y Y actuales de la partícula.
 
-```text
-position
-velocity
-color
-age
-lifetime
-size
-```
+velocity contiene la velocidad en X y Y que determina hacia dónde se está moviendo.
 
-`position` contiene las coordenadas X y Y actuales de la partícula.
+color contiene el color de la partícula.
 
-`velocity` contiene la velocidad en X y Y que determina hacia dónde se está moviendo.
+age indica cuánto tiempo lleva existiendo.
 
-`color` contiene el color de la partícula.
+lifetime indica cuánto tiempo puede existir antes de ser eliminada.
 
-`age` indica cuánto tiempo lleva existiendo.
+siz determina el tamaño con el que se dibuja.
 
-`lifetime` indica cuánto tiempo puede existir antes de ser eliminada.
+En la ventana Memory 1 esta información ya no aparece organizada con nombres, sino como bytes almacenados consecutivamente en memoria.
 
-`size` determina el tamaño con el que se dibuja.
-
-En la ventana **Memory 1** esta información ya no aparece organizada con nombres, sino como bytes almacenados consecutivamente en memoria.
-
-Por ejemplo, valores como:
-
-
-se pueden encontrar representados en memoria según la representación binaria de un número `float`.
-
-Por esta razón, la ventana **Locals** facilita entender los datos, mientras que **Memory 1** permite observar cómo están almacenados físicamente.
+Por esta razón, la ventana Locals facilita entender los datos, mientras que Memory 1 permite observar cómo están almacenados físicamente.
 
 ### Conclusión
 
@@ -289,43 +233,29 @@ Puedo concluir que un objeto derivado contiene en memoria la información necesa
 Un `CircularExplosion` no es un objeto completamente separado de `ExplosionParticle` y `Particle`. En memoria, esas clases forman parte del mismo objeto.
 La herencia que vemos en el código también tiene una representación concreta en memoria.
 
----
-
-# 3. Métodos virtuales y `_vtable`
-
-Al observar nuevamente el objeto `CircularExplosion`, se puede ver que primero aparece la parte correspondiente a `ExplosionParticle`.
-Dentro de `ExplosionParticle` aparece la parte correspondiente a `Particle`.
-Finalmente, al abrir `Particle`, aparece un campo relacionado con la tabla virtual, como `_vtable` o un puntero similar dependiendo del compilador.
-Esto aparece porque `Particle` tiene funciones virtuales, por ejemplo:
-cpp
-virtual void update(float dt) = 0;
-virtual void draw() = 0;
-virtual bool isDead() const = 0;
-virtual bool shouldExplode() const;
-virtual glm::vec2 getPosition() const;
-virtual ofColor getColor() const;
-```
-La tabla virtual es una estructura que contiene direcciones hacia las funciones virtuales correspondientes al tipo real del objeto.
-Esto permite que ocurra el polimorfismo.
-Por ejemplo, el programa puede tener:
-cpp
-Particle* p;
-
-y ese puntero puede apuntar realmente a:
-cpp
-CircularExplosion
-
-Cuando se ejecuta:
-
-```cpp
-p->draw();
-```
-
-el programa necesita saber qué versión de `draw()` debe ejecutar.
 
 ### ¿Qué puedo observar en la tabla virtual?
 Con el depurador se pueden observar direcciones de memoria que corresponden a diferentes funciones virtuales.
 Dependiendo de Visual Studio y de la versión del compilador, los nombres pueden mostrarse de manera diferente, pero estas direcciones permiten al programa decidir qué implementación de una función debe ejecutar.
 
+# Actividad 4 Encapsulamiento
 
+Al ejecutar el código inicialmente, el programa compila correctamente porque desde main() solamente se está accediendo a la variable publicVar, la cual está declarada como pública. Esto significa que puede ser utilizada y modificada desde fuera de la clase.
+Cuando se descomenta la línea
+el programa genera un error de compilación. Esto sucede porque protectedVar está declarada como protected, por lo que no puede ser accedida directamente desde main(). Los miembros protegidos solamente pueden ser utilizados dentro de la misma clase y por clases que hereden de ella.
 
+También ocurre un error al descomentar:
+porque privateVar está declarada como private. Esto significa que solamente puede ser accedida directamente desde el interior de la clase `AccessControl`.
+
+Por lo tanto, los modificadores de acceso permiten controlar qué partes de un objeto pueden ser utilizadas desde otras partes del programa.
+
+En este ejemplo:
+
+* publi` permite acceder al atributo desde cualquier parte donde el objeto sea visible.
+* protected permite el acceso desde la propia clase y desde las clases derivadas.
+* private permite el acceso solamente desde la propia clase.
+### Conclusión
+
+mi conclusiion es que el encapsulamiento en C++ permite proteger los datos internos de una clase y controlar quién puede acceder a ellos. También pude observar que esta protección se verifica durante la compilación, ya que el programa ni siquiera compila cuando se intenta acceder directamente a un miembro private o protected desde un lugar donde no está permitido.
+
+Esto ayuda a evitar que otras partes del programa modifiquen directamente información que debería estar controlada por la propia clase.
