@@ -143,4 +143,189 @@ Pienso que funciona de esta manera porque `private` es una regla del lenguaje qu
 
 <img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/222d3055-f8c3-4b5e-8096-fdd820e3e892" />
 
+Este programa funciona como una simulación de fuegos artificiales hecha en OpenFrameworks. Al iniciar, se abre una ventana donde se muestran diferentes partículas en pantalla.
+Cuando el usuario hace clic con el mouse, se crea una partícula desde la parte inferior de la ventana que sube hacia arriba. Esta partícula tiene una dirección, velocidad, color y tiempo de vida. Cuando llega a cierta altura o termina su tiempo, explota y genera varias partículas nuevas.
+Las explosiones pueden ser de tres tipos diferentes: circular, aleatoria o en forma de estrella. Cada una tiene un comportamiento y una forma visual distinta. Después de un tiempo, las partículas de la explosión van desapareciendo hasta que son eliminadas del programa.
+También se puede presionar la barra espaciadora para generar muchas partículas al mismo tiempo y crear una gran cantidad de fuegos artificiales. Además, al presionar la tecla S se puede guardar una captura de pantalla.
+En general, el programa utiliza partículas, herencia y polimorfismo para crear diferentes tipos de fuegos artificiales y controlar su comportamiento en pantalla.
+
+# Actividad 3
+
+ 1. Observación de la clase `ofApp`
+
+# Hipótesis antes de ejecutar
+
+Antes de ejecutar el programa, espero encontrar en memoria un objeto de tipo `ofApp`. Dentro de este objeto se encuentra el vector
+Este vector no guarda directamente los objetos de las partículas, sino punteros a objetos que se crean dinámicamente con `new`.
+Por eso, inicialmente espero que el vector esté vacío y que, cuando se creen partículas, el vector empiece a almacenar direcciones de memoria que apuntan a objetos como RisingParticle, CircularExplosion, RandomExplosio o StarExplosion
+También espero que estos objetos estén almacenados en el heap, ya que son creados usando `new`.
+
+### ¿Qué puedo observar al ejecutar?
+
+Al utilizar el depurador en las ventanas **Locals** o **Autos**, puedo observar el objeto `ofApp` y dentro de este el vector `particles`.
+
+Antes de crear partículas, el tamaño del vector es 0. Después de hacer clic o crear partículas, puedo observar que el tamaño aumenta y aparecen diferentes direcciones de memoria dentro del vector.
+
+El depurador permite ver información como:
+
+* El tamaño actual del vector.
+* La capacidad del vector.
+* Las direcciones almacenadas en `particles`.
+* El tipo de objeto al que apunta cada puntero.
+* Los atributos que tiene cada partícula.
+* Las direcciones donde se encuentran los objetos en memoria.
+
+Por ejemplo, un elemento del vector puede ser un `Particle*`, pero realmente apuntar a un objeto de tipo `RisingParticle` o `CircularExplosion`.
+
+### Conclusión
+
+Puedo concluir que `particles` funciona como un contenedor de punteros polimórficos. Todos los elementos son tratados como `Particle*`, pero los objetos reales pueden pertenecer a diferentes clases derivadas.
+
+Los objetos son creados dinámicamente en memoria, por lo que es importante utilizar `delete` cuando dejan de utilizarse. De lo contrario, se producirían fugas de memoria.
+
+---
+
+# 2. Objeto `CircularExplosion` en memoria
+
+Para poder capturar más fácilmente un objeto `CircularExplosion`, hice una modificación temporal para evitar que el tipo de explosión fuera completamente aleatorio.
+
+Por ejemplo, en lugar de:
+
+```cpp
+int explosionType = (int)ofRandom(3);
+```
+
+se puede colocar temporalmente:
+
+```cpp
+int explosionType = 0;
+```
+
+De esta manera todas las explosiones generadas son `CircularExplosion`.
+
+Después se puede colocar un breakpoint cuando se crea el objeto:
+
+```cpp
+particles.push_back(
+    new CircularExplosion(
+        particles[i]->getPosition(),
+        particles[i]->getColor()
+    )
+);
+```
+
+Así es más fácil detener la ejecución y observar el objeto con el depurador.
+
+## Jerarquía de `CircularExplosion`
+
+La jerarquía de clases es:
+
+```text
+Particle
+   ↑
+ExplosionParticle
+   ↑
+CircularExplosion
+```
+
+Esto quiere decir que un `CircularExplosion` también contiene todo lo que pertenece a `ExplosionParticle` y a `Particle`.
+
+Al abrir el objeto con el depurador se puede observar algo parecido a:
+
+```text
+CircularExplosion
+└── ExplosionParticle
+    ├── Particle
+    │   └── _vtable
+    ├── position
+    ├── velocity
+    ├── color
+    ├── age
+    ├── lifetime
+    └── size
+```
+
+`CircularExplosion` no agrega atributos propios. Principalmente modifica el comportamiento del objeto mediante su constructor y su método `draw()`.
+
+### ¿Qué puedo observar en memoria?
+
+En la ventana **Locals** puedo ver los atributos de la explosión de una forma más fácil de interpretar.
+
+Por ejemplo:
+
+```text
+position
+velocity
+color
+age
+lifetime
+size
+```
+
+`position` contiene las coordenadas X y Y actuales de la partícula.
+
+`velocity` contiene la velocidad en X y Y que determina hacia dónde se está moviendo.
+
+`color` contiene el color de la partícula.
+
+`age` indica cuánto tiempo lleva existiendo.
+
+`lifetime` indica cuánto tiempo puede existir antes de ser eliminada.
+
+`size` determina el tamaño con el que se dibuja.
+
+En la ventana **Memory 1** esta información ya no aparece organizada con nombres, sino como bytes almacenados consecutivamente en memoria.
+
+Por ejemplo, valores como:
+
+
+se pueden encontrar representados en memoria según la representación binaria de un número `float`.
+
+Por esta razón, la ventana **Locals** facilita entender los datos, mientras que **Memory 1** permite observar cómo están almacenados físicamente.
+
+### Conclusión
+
+Puedo concluir que un objeto derivado contiene en memoria la información necesaria de sus clases base.
+Un `CircularExplosion` no es un objeto completamente separado de `ExplosionParticle` y `Particle`. En memoria, esas clases forman parte del mismo objeto.
+La herencia que vemos en el código también tiene una representación concreta en memoria.
+
+---
+
+# 3. Métodos virtuales y `_vtable`
+
+Al observar nuevamente el objeto `CircularExplosion`, se puede ver que primero aparece la parte correspondiente a `ExplosionParticle`.
+Dentro de `ExplosionParticle` aparece la parte correspondiente a `Particle`.
+Finalmente, al abrir `Particle`, aparece un campo relacionado con la tabla virtual, como `_vtable` o un puntero similar dependiendo del compilador.
+Esto aparece porque `Particle` tiene funciones virtuales, por ejemplo:
+cpp
+virtual void update(float dt) = 0;
+virtual void draw() = 0;
+virtual bool isDead() const = 0;
+virtual bool shouldExplode() const;
+virtual glm::vec2 getPosition() const;
+virtual ofColor getColor() const;
+```
+La tabla virtual es una estructura que contiene direcciones hacia las funciones virtuales correspondientes al tipo real del objeto.
+Esto permite que ocurra el polimorfismo.
+Por ejemplo, el programa puede tener:
+cpp
+Particle* p;
+
+y ese puntero puede apuntar realmente a:
+cpp
+CircularExplosion
+
+Cuando se ejecuta:
+
+```cpp
+p->draw();
+```
+
+el programa necesita saber qué versión de `draw()` debe ejecutar.
+
+### ¿Qué puedo observar en la tabla virtual?
+Con el depurador se pueden observar direcciones de memoria que corresponden a diferentes funciones virtuales.
+Dependiendo de Visual Studio y de la versión del compilador, los nombres pueden mostrarse de manera diferente, pero estas direcciones permiten al programa decidir qué implementación de una función debe ejecutar.
+
+
 
