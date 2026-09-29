@@ -259,3 +259,180 @@ En este ejemplo:
 mi conclusiion es que el encapsulamiento en C++ permite proteger los datos internos de una clase y controlar quién puede acceder a ellos. También pude observar que esta protección se verifica durante la compilación, ya que el programa ni siquiera compila cuando se intenta acceder directamente a un miembro private o protected desde un lugar donde no está permitido.
 
 Esto ayuda a evitar que otras partes del programa modifiquen directamente información que debería estar controlada por la propia clase.
+
+## Analiza el siguiente programa
+
+#include <iostream>
+class MyClass {
+private:
+		int secret1;
+		float secret2;
+		char secret3;
+public:
+		MyClass(int s1, float s2, char s3) : secret1(s1), secret2(s2), secret3(s3) {}
+    void printMembers() const {
+		    std::cout << "secret1: " << secret1 << "\n";
+		    std::cout << "secret2: " << secret2 << "\n";
+		    std::cout << "secret3: " << secret3 << "\n";
+		    }
+		};
+
+int main() {
+		MyClass obj(42, 3.14f, 'A');
+		// Esta línea causará un error de compilación
+		std::cout << obj.secret1 << std::endl;
+    obj.printMembers();
+    // Método público para mostrar los valores
+    return 0;
+    }
+
+### Que pasa?
+
+este programa demuestra el encapsulamiento. Los atributos privados están protegidos del acceso directo desde fuera de la clase, y para trabajar con ellos se deben utilizar métodos públicos como printMembers().
+
+
+## Ahora prueba con este programa:
+
+```cpp
+#include <iostream>
+class MyClass {
+private:
+		int secret1;
+		float secret2;
+		char secret3;
+public:
+		MyClass(int s1, float s2, char s3) : secret1(s1), secret2(s2), secret3(s3) {}
+    void printMembers() const {
+		    std::cout << "secret1: " << secret1 << "\n";
+		    std::cout << "secret2: " << secret2 << "\n";
+		    std::cout << "secret3: " << secret3 << "\n";
+		    }
+		};
+int main() {
+		MyClass obj(42, 3.14f, 'A');
+    // Usando reinterpret_cast para violar el encapsulamiento
+    int* ptrInt = reinterpret_cast<int*>(&obj);
+    float* ptrFloat = reinterpret_cast<float*>(ptrInt + 1);
+    char* ptrChar = reinterpret_cast<char*>(ptrFloat + 1);
+    // Accediendo y mostrando los valores privados
+    std::cout << "Accediendo directamente a los miembros privados:\n";
+    std::cout << "secret1: " << *ptrInt << "\n";
+    // Accede a secret1
+    std::cout << "secret2: " << *ptrFloat << "\n";
+    // Accede a secret2
+    std::cout << "secret3: " << *ptrChar << "\n";
+    // Accede a secret3
+    return 0;
+    }
+```
+Compila el programa y ejecuta. ¿Qué puedes concluir?
+En tus palabras, ¿Qué es el encapsulamiento? ¿Por qué es importante?
+
+Con este experimento pude entender que el encapsulamiento sirve para proteger los datos internos de una clase y evitar que se acceda a ellos directamente desde cualquier parte del programa. Aunque con reinterpret_cast se puede intentar acceder a la memoria y obtener los valores privados, esta no es una práctica segura porque depende de cómo estén organizados los datos en memoria y puede generar errores.
+
+Por eso, considero que lo correcto es acceder a los atributos privados mediante métodos públicos. el programa tiene un mejor control sobre la información, es más seguro y también es más fácil de mantener.
+
+# Actividad 5
+
+### ¿Qué puedes observar? 
+Cuando creo un objeto de tipo CircularExplosion y lo observo con el depurador, puedo ver que el objeto no contiene solamente la información propia de CircularExplosion, sino también los atributos que pertenecen a sus clases base.
+
+### ¿Qué información te proporciona el depurador?
+
+La memoria de un objeto de una clase derivada también contiene la información de sus clases base. En CircularExplosion, el objeto incluye los atributos heredados de ExplosionParticle y además información utilizada para el polimorfismo, como el puntero a la tabla virtual. El depurador permite observar estos atributos, sus valores y sus direcciones en memoria. Esto demuestra que la herencia no es solamente una relación conceptual entre clases, sino que también afecta directamente cómo se construye y organiza un objeto en memoria.
+
+### ¿Cómo se implementa la herencia en C++?
+
+En C++, la herencia se implementa declarando una clase derivada a partir de una clase base usando :. es decir simplemete escribes la clase class "tu clase" : public y la clase que hereda
+
+### Realiza un experimento que te permita ver cómo se objeto en memoria cuya clase base tiene herencia múltiple.
+
+ Código a continuacion:
+ 
+#include <iostream>
+
+class A {
+public:
+    int numeroA;
+
+    A() {
+        numeroA = 10;
+    }
+
+    virtual void mostrarA() {
+        std::cout << "Clase A" << std::endl;
+    }
+};
+
+class B {
+public:
+    float numeroB;
+
+    B() {
+        numeroB = 20.5f;
+    }
+
+    virtual void mostrarB() {
+        std::cout << "Clase B" << std::endl;
+    }
+};
+
+class C : public A, public B {
+public:
+    char letraC;
+
+    C() {
+        letraC = 'X';
+    }
+
+    void mostrar() {
+        std::cout << numeroA << std::endl;
+        std::cout << numeroB << std::endl;
+        std::cout << letraC << std::endl;
+    }
+};
+
+int main() {
+
+    C objeto;
+
+    objeto.mostrar();
+
+    std::cout << "\nDirecciones de memoria:" << std::endl;
+
+    std::cout << "Objeto C: "
+              << &objeto << std::endl;
+
+    std::cout << "Parte A: "
+              << static_cast<A*>(&objeto) << std::endl;
+
+    std::cout << "Parte B: "
+              << static_cast<B*>(&objeto) << std::endl;
+
+    std::cout << "numeroA: "
+              << &objeto.numeroA << std::endl;
+
+    std::cout << "numeroB: "
+              << &objeto.numeroB << std::endl;
+
+    std::cout << "letraC: "
+              << static_cast<void*>(&objeto.letraC) << std::endl;
+
+    return 0;
+}
+
+
+# Actividad 6
+
+### ¿Qué relación existe entre los métodos virtuales y el polimorfismo?
+
+Los métodos virtuales permiten que el polimorfismo en tiempo de ejecución funcione. Al declarar un método como virtual, C++ puede decidir durante la ejecución qué versión del método debe llamar dependiendo del tipo real del objeto y no solamente del tipo del puntero.
+
+Esto permite utilizar un puntero de la clase base, como Particle, para manejar objetos de diferentes clases derivadas y hacer que cada uno ejecute su propio comportamiento.
+
+### Dibujo
+
+
+
+
+
