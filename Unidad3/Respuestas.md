@@ -433,6 +433,111 @@ Esto permite utilizar un puntero de la clase base, como Particle, para manejar o
 ### Dibujo
 
 
+# Actividad 7
+
+## 1. Implementación de las extensiones
+
+Para extender el sistema de partículas agregué dos nuevos tipos de partículas diferentes a RisingParticle: ZigZagParticle y SideParticle.
+
+ZigZagParticle nace desde la parte inferior de la pantalla, al igual que una partícula ascendente, pero tiene un comportamiento diferente porque mientras sube realiza un movimiento horizontal de lado a lado utilizando una función seno. También se representa con un triángulo para poder distinguirla visualmente de los demás tipos de partículas.
+
+La segunda extensión fue SideParticle. Esta partícula aparece aleatoriamente desde el lado izquierdo o derecho de la pantalla y se desplaza hacia la zona central. Para calcular su movimiento se obtiene un vector entre su posición inicial y el objetivo y posteriormente se normaliza para definir la dirección de movimiento.
+
+Ambas partículas tienen una duración determinada. Cuando su tiempo de vida termina, shouldExplode() devuelve true, permitiendo que el programa genere una explosión desde la última posición de la partícula.
+
+También implementé un nuevo modo de explosión llamado CrossExplosion. Esta clase hereda de ExplosionParticle y genera partículas que se desplazan hacia arriba, abajo, izquierda o derecha, creando visualmente una explosión en forma de cruz.
+
+Decidí implementar estas extensiones porque permiten agregar comportamientos diferentes sin modificar la estructura principal del sistema de partículas.
+
+## 2. Encapsulamiento, herencia y polimorfismo
+
+### Encapsulamiento
+
+El encapsulamiento se utiliza para controlar el acceso a los datos internos de cada partícula.
+
+Por ejemplo, en las nuevas clases se almacenan variables como la posición, velocidad, color, tiempo de vida y edad. Estas variables pertenecen al estado interno de cada objeto y no necesitan ser modificadas directamente desde `ofApp`.
+
+En lugar de acceder directamente a todos los atributos, se utilizan métodos como getPosition, getColor, isDead y shouldExplode.
+
+Esto hace que cada clase sea responsable de manejar su propio estado y evita que otras partes del programa modifiquen sus datos de una forma incorrecta.
+
+### Herencia
+
+La herencia se utiliza en el programa mediante la clase base Particle.
+
+Las nuevas clases se declararon de la siguiente manera:
+
+ZigZagParticle : public Particle
+
+SideParticle : public Particle
+
+Esto permite que ambas sean consideradas partículas y que implementen la misma interfaz definida por la clase Particle.
+
+También se utilizó herencia para la nueva explosión:
+
+CrossExplosion : public ExplosionParticle
+
+Gracias a esto, CrossExplosion reutiliza atributos y métodos que ya existen en ExplosionParticle, como la posición, velocidad, color, tiempo de vida y comportamiento general de actualización.
+
+Esto evita repetir código y facilita la creación de nuevas clases.
+
+### Polimorfismo
+
+El polimorfismo se observa principalmente en el vector:
+
+std::vector<Particle*> particles
+
+Este vector almacena punteros de tipo Particle, pero los objetos que realmente contiene pueden ser de tipos diferentes.
+
+Por ejemplo, dentro del mismo vector pueden existir objetos de tipo RisingParticle, ZigZagParticle, SideParticle , CircularExplosion, RandomExplosion, StarExplosion y CrossExplosion.
+
+Durante la actualización se utiliza:
+
+particles[i]->update(dt);
+
+Aunque la instrucción es siempre la misma, el método que se ejecuta depende del tipo real del objeto.
+
+Si el objeto es ZigZagParticle, se ejecuta ZigZagParticle::update. Si es SideParticle, se ejecuta SideParticle::update(). En las partículas de explosión se ejecuta el método correspondiente heredado de ExplosionParticle.
+
+Esto es posible porque update fue declarado como método virtual en la clase Particle.
+
+De esta manera, una misma colección puede manejar diferentes tipos de objetos sin necesidad de conocer exactamente qué clase tiene cada elemento.
+
+## 3. Verificación de las extensiones
+
+Para verificar que las nuevas extensiones funcionaban correctamente realicé varias pruebas.
+
+Primero asigné diferentes teclas para generar cada tipo de partícula. La tecla 1 crea una RisingParticle, la tecla 2 crea una ZigZagParticle y la tecla 3 crea una SideParticle.
+
+También utilicé la barra espaciadora para generar diferentes tipos de partículas al mismo tiempo. Esto permitió comprobar visualmente que cada una tenía un comportamiento distinto.
+
+Para verificar CrossExplosion, modifiqué el sistema de explosiones para que escogiera aleatoriamente entre cuatro tipos de explosión en lugar de tres. Al ejecutar el programa se pudo observar que algunas explosiones generaban partículas que se desplazaban horizontal y verticalmente, formando una cruz.
+
+Finalmente utilicé el depurador para comprobar el polimorfismo.
+
+Coloqué un breakpoint en la línea:
+
+particles[i]->update(dt);
+
+En ese momento inspeccioné el vector particles y pude observar que existían objetos de diferentes clases almacenados mediante punteros Particle.
+
+Posteriormente utilicé la opción Step Into del depurador. Al avanzar sobre la misma línea de código, el programa ingresó a diferentes implementaciones de update dependiendo del objeto que se estaba procesando.
+
+Por ejemplo, cuando el objeto era de tipo ZigZagParticle, el depurador entraba a ZigZagParticle::update, mientras que cuando era un SideParticle, entraba a SideParticle::update.
+
+Esto permitió comprobar directamente el polimorfismo en tiempo de ejecución.
+
+## Conclusión
+
+Con esta actividad entendí mejor cómo los conceptos de programación orientada a objetos pueden trabajar juntos dentro de un programa real.
+
+La herencia permite crear nuevos tipos de partículas reutilizando una estructura común, el encapsulamiento permite que cada objeto controle sus propios datos y el polimorfismo permite manejar diferentes tipos de partículas mediante un mismo vector y una misma llamada a update.
+
+También pude comprobar con el depurador que el tipo del puntero puede ser Particle, pero el programa ejecuta el método correspondiente al tipo real del objeto durante la ejecución.
+
+Las extensiones realizadas también demostraron que la estructura original del programa es flexible, ya que se pueden agregar nuevos tipos de partículas y explosiones sin tener que cambiar completamente el funcionamiento general del sistema.
+
+
 
 
 
